@@ -53,8 +53,8 @@ def calculate_distance_matrix(df)->pd.DataFrame():
                 # Compute the distance as the sum of distances between rows i to j
                 in_between_distances = df[(df['id_start'] >= min(i, j)) & (df['id_end'] <= max(i, j))]['distance']
                 distance_matrix.at[i, j] = in_between_distances.sum()
-
-    return distance_matrix
+    df = distance_matrix
+    return df
 
 
 def unroll_distance_matrix(df)->pd.DataFrame():
