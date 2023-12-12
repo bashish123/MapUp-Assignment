@@ -16,8 +16,9 @@ def generate_car_matrix(df)->pd.DataFrame:
     dff = pd.read_csv(df)
     
     df_1 = dff.pivot(index='id_1', columns='id_2', values='car')
-    df_2 = df_1.fillna(0)
-    return df_2
+    df = df_1.fillna(0)
+    
+    return df
 
 
 def get_type_count(df)->dict:

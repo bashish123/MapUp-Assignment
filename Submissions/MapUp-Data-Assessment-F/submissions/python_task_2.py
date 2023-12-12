@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 
-    
+
+   
 def calculate_distance_matrix(df)->pd.DataFrame():
     """
     Calculate a distance matrix based on the dataframe, df.
@@ -42,30 +43,18 @@ def calculate_distance_matrix(df)->pd.DataFrame():
         distance_matrix.loc[start_id, end_id] = distance
         distance_matrix.loc[end_id, start_id] = distance
         
-    cols = distance_matrix.columns
-    currentSum = 0
+    # Iterate through rows and columns
+    for i in df['id_start']:
+        for j in df['id_start']:
+            if i == j:
+                # If row index is the same as column name, set the distance to 0
+                distance_matrix.at[i, j] = 0
+            else:
+                # Compute the distance as the sum of distances between rows i to j
+                in_between_distances = df[(df['id_start'] >= min(i, j)) & (df['id_end'] <= max(i, j))]['distance']
+                distance_matrix.at[i, j] = in_between_distances.sum()
 
-    for col_Idx,active_Col in enumerate(cols):
-        if col_Idx!=len(cols)-1:
-            currentSum=distance_matrix.iloc[col_Idx,col_Idx+1]
-        else:
-            break
-           
-        for next_Col_Idx in range(col_Idx+1,len(cols)):
-            distance_matrix.iloc[col_Idx,next_Col_Idx]=currentSum
-            currentSum+=distance_matrix.iloc[next_Col_Idx-1,next_Col_Idx]
-            
-    n = distance_matrix.shape[0] #Blank matrix with 0's
-    
-    upper_triangle = np.triu(distance_matrix.values, k=1)
-    
-    lower_triangle = upper_triangle.T
-    
-    distance_matrix.values[np.tril_indices(n, k=-1)] = lower_triangle[np.tril_indices(n, k=-1)]
-    
-    df = distance_matrix
-
-    return df
+    return distance_matrix
 
 
 def unroll_distance_matrix(df)->pd.DataFrame():
@@ -79,6 +68,24 @@ def unroll_distance_matrix(df)->pd.DataFrame():
         pandas.DataFrame: Unrolled DataFrame containing columns 'id_start', 'id_end', and 'distance'.
     """
     # Write your logic here
+    
+    # Initialize an empty list to store the unrolled data
+    unrolled_data = []
+
+    # Iterate through the rows and columns of the distance matrix
+    for row in df.index:
+        for col in df.columns:
+            # Skip entries where the row and column names are the same
+            if row != col:
+                # Append a dictionary with id_start, id_end, and distance
+                unrolled_data.append({
+                    'id_start': row,
+                    'id_end': col,
+                    'distance': df.loc[row, col]
+                })
+
+    # Create a new DataFrame from the unrolled data
+    df = pd.DataFrame(unrolled_data)
 
     return df
 
@@ -96,9 +103,29 @@ def find_ids_within_ten_percentage_threshold(df, reference_id)->pd.DataFrame():
                           of the reference ID's average distance.
     """
     # Write your logic here
+        # Filter rows for the specified reference value
+    reference_rows = df[df['id_start'] == reference_id]
+
+    # Calculate the average distance for the reference value
+    average_distance = reference_rows['distance'].mean()
+
+    # Calculate the threshold range (10% of the average distance)
+    threshold_range = 0.1 * average_distance
+
+    # Filter rows within the threshold range
+    within_threshold = df[
+        (df['distance'] >= average_distance - threshold_range) &
+        (df['distance'] <= average_distance + threshold_range)
+    ]
+
+    # Get unique values from the 'id_start' column within the threshold
+    df = within_threshold[['id_start']].drop_duplicates()
+
+    # Sort the result_ids list
+    df.sort_values(by='id_start', inplace=True)
+
 
     return df
-
 
 def calculate_toll_rate(df)->pd.DataFrame():
     """
@@ -111,6 +138,12 @@ def calculate_toll_rate(df)->pd.DataFrame():
         pandas.DataFrame
     """
     # Wrie your logic here
+    # rate coefficients for each vehicle type
+    rate_coefficients = {'moto': 0.8, 'car': 1.2, 'rv': 1.5, 'bus': 2.2, 'truck': 3.6}
+
+    # Adding columns for each vehicle type with their respective rate coefficients
+    for vehicle_type, rate_coefficient in rate_coefficients.items():
+        df[vehicle_type] = df['distance'] * rate_coefficient
 
     return df
 
@@ -126,5 +159,6 @@ def calculate_time_based_toll_rates(df)->pd.DataFrame():
         pandas.DataFrame
     """
     # Write your logic here
+    
 
     return df
