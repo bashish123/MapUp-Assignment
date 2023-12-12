@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+from itertools import combinations
 
    
 def calculate_distance_matrix(df)->pd.DataFrame():
